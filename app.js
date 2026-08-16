@@ -219,9 +219,9 @@ function initMonotributoCalculator() {
     { cat: 'F', limitServices: 45151659.41, limitGoods: 45151659.41, quotaServices: 150784.21, quotaGoods: 129930.65 },
     { cat: 'G', limitServices: 53995798.87, limitGoods: 53995798.87, quotaServices: 230312.94, quotaGoods: 158815.05 },
     { cat: 'H', limitServices: 81924660.37, limitGoods: 81924660.37, quotaServices: 522706.68, quotaGoods: 317895.01 },
-    { cat: 'I', limitServices: 81924660.37, limitGoods: 91699761.90, quotaServices: 963747.86, quotaGoods: 474992.78 },
-    { cat: 'J', limitServices: 81924660.37, limitGoods: 105012519.20, quotaServices: 1167299.76, quotaGoods: 580793.69 },
-    { cat: 'K', limitServices: 81924660.37, limitGoods: 126610838.75, quotaServices: 1614446.04, quotaGoods: 702103.24 }
+    { cat: 'I', limitServices: 91699761.90, limitGoods: 91699761.90, quotaServices: 963747.86, quotaGoods: 474992.78 },
+    { cat: 'J', limitServices: 105012519.20, limitGoods: 105012519.20, quotaServices: 1167299.76, quotaGoods: 580793.69 },
+    { cat: 'K', limitServices: 126610838.75, limitGoods: 126610838.75, quotaServices: 1614446.04, quotaGoods: 702103.24 }
   ];
 
   if (calcBtn) {
