@@ -79,19 +79,12 @@ function initTaxCalendar() {
   if (organismSelect) organismSelect.addEventListener('change', renderCalendar);
 
   function getBaseDay(digit) {
-    // IVA/Libro IVA Digital - Cronograma ARCA agosto 2026 (0-1: 18, 2-3: 19, 4-5: 20, 6-7: 21, 8-9: 24)
+    // Base day rules according to terminal digit (0-1: 18th, 2-3: 19th, 4-5: 20th, 6-7: 21st, 8-9: 22nd)
     if (digit === 0 || digit === 1) return 18;
     if (digit === 2 || digit === 3) return 19;
     if (digit === 4 || digit === 5) return 20;
     if (digit === 6 || digit === 7) return 21;
-    return 24;
-  }
-
-  function getGroupDay(digit, day1, day2, day3) {
-    // Agrupa por terminación de CUIT: 0-3 / 4-6 / 7-9
-    if (digit >= 0 && digit <= 3) return day1;
-    if (digit >= 4 && digit <= 6) return day2;
-    return day3;
+    return 22;
   }
 
   function renderCalendar() {
@@ -131,7 +124,7 @@ function initTaxCalendar() {
         badgeClass: 'badge-arca',
         name: 'Autónomos (Régimen General)',
         period: `${monthNames[monthVal - 1]} ${yearVal}`,
-        dueDay: getGroupDay(selectedDigit, 5, 6, 7),
+        dueDay: baseDay - 10 < 5 ? 5 + selectedDigit : baseDay - 10,
         desc: 'Aporte de trabajadores independientes registrados.'
       },
       {
@@ -139,7 +132,7 @@ function initTaxCalendar() {
         badgeClass: 'badge-arca',
         name: 'Empleadores (Formulario 931 / Sueldos)',
         period: `${monthNames[monthVal - 2 < 0 ? 11 : monthVal - 2]} ${yearVal}`,
-        dueDay: getGroupDay(selectedDigit, 10, 11, 12),
+        dueDay: 9 + Math.floor(selectedDigit / 2),
         desc: 'Presentación e integración de aportes y contribuciones patronales.'
       },
       {
@@ -153,7 +146,7 @@ function initTaxCalendar() {
       {
         organism: 'DGR Corrientes',
         badgeClass: 'badge-dgr',
-        name: 'Convenio Multilateral (Siapere Corrientes)',
+        name: 'Convenio Multilateral (Sifere Corrientes)',
         period: `${monthNames[monthVal - 2 < 0 ? 11 : monthVal - 2]} ${yearVal}`,
         dueDay: 15 + Math.floor(selectedDigit / 2),
         desc: 'Liquidación mensual para contribuyentes con actividad en varias provincias.'
@@ -209,19 +202,19 @@ function initMonotributoCalculator() {
   const quotaResult = document.getElementById('calcQuotaResult');
   const descResult = document.getElementById('calcDescResult');
 
-  // Categories reference table (Valores vigentes desde el 1/08/2026 - ARCA)
+  // Categories reference table
   const categories = [
-    { cat: 'A', limitServices: 12009410.45, limitGoods: 12009410.45, quotaServices: 49527.18, quotaGoods: 49527.18 },
-    { cat: 'B', limitServices: 17595182.74, limitGoods: 17595182.74, quotaServices: 56379.08, quotaGoods: 56379.08 },
-    { cat: 'C', limitServices: 24670494.31, limitGoods: 24670494.31, quotaServices: 66020.12, quotaGoods: 64530.58 },
-    { cat: 'D', limitServices: 30628651.43, limitGoods: 30628651.43, quotaServices: 84612.93, quotaGoods: 82564.81 },
-    { cat: 'E', limitServices: 36028231.33, limitGoods: 36028231.33, quotaServices: 119811.45, quotaGoods: 108267.51 },
-    { cat: 'F', limitServices: 45151659.41, limitGoods: 45151659.41, quotaServices: 150784.21, quotaGoods: 129930.65 },
-    { cat: 'G', limitServices: 53995798.87, limitGoods: 53995798.87, quotaServices: 230312.94, quotaGoods: 158815.05 },
-    { cat: 'H', limitServices: 81924660.37, limitGoods: 81924660.37, quotaServices: 522706.68, quotaGoods: 317895.01 },
-    { cat: 'I', limitServices: 91699761.90, limitGoods: 91699761.90, quotaServices: 963747.86, quotaGoods: 474992.78 },
-    { cat: 'J', limitServices: 105012519.20, limitGoods: 105012519.20, quotaServices: 1167299.76, quotaGoods: 580793.69 },
-    { cat: 'K', limitServices: 126610838.75, limitGoods: 126610838.75, quotaServices: 1614446.04, quotaGoods: 702103.24 }
+    { cat: 'A', limitServices: 6450000, limitGoods: 6450000, quota: 26600 },
+    { cat: 'B', limitServices: 9450000, limitGoods: 9450000, quota: 30280 },
+    { cat: 'C', limitServices: 13250000, limitGoods: 13250000, quota: 35400 },
+    { cat: 'D', limitServices: 16450000, limitGoods: 16450000, quota: 45200 },
+    { cat: 'E', limitServices: 19350000, limitGoods: 19350000, quota: 58100 },
+    { cat: 'F', limitServices: 24250000, limitGoods: 24250000, quota: 69800 },
+    { cat: 'G', limitServices: 29000000, limitGoods: 29000000, quota: 85200 },
+    { cat: 'H', limitServices: 44000000, limitGoods: 44000000, quota: 170000 },
+    { cat: 'I', limitServices: 44000000, limitGoods: 53250000, quota: 255000 },
+    { cat: 'J', limitServices: 44000000, limitGoods: 61000000, quota: 310000 },
+    { cat: 'K', limitServices: 44000000, limitGoods: 68000000, quota: 395000 }
   ];
 
   if (calcBtn) {
@@ -258,9 +251,8 @@ function initMonotributoCalculator() {
     }
 
     if (foundCat) {
-      const quota = activityType === 'services' ? foundCat.quotaServices : foundCat.quotaGoods;
       categoryResult.textContent = `Categoría ${foundCat.cat}`;
-      quotaResult.textContent = `$${quota.toLocaleString('es-AR', {maximumFractionDigits: 0})} /mes`;
+      quotaResult.textContent = `$${foundCat.quota.toLocaleString('es-AR')} /mes`;
       descResult.textContent = `Facturación anual estimada: $${annualVal.toLocaleString('es-AR')}. Apta para Monotributo unificado e Ingresos Brutos.`;
     } else {
       categoryResult.textContent = 'Excede Monotributo';
