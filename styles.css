@@ -17,17 +17,17 @@
   --royal-blue: #2563EB;
   --sky-glow: #60A5FA;
   
-  --gold-main: #E5B849;
-  --gold-hover: #F5D061;
-  --gold-glow: rgba(229, 184, 73, 0.35);
-  --gold-gradient: linear-gradient(135deg, #F3C04A 0%, #D4A017 50%, #FAD02C 100%);
+  --gold-main: #A9791A;
+  --gold-hover: #C79A3D;
+  --gold-glow: rgba(169, 121, 26, 0.35);
+  --gold-gradient: linear-gradient(135deg, #BC9430 0%, #7A5A10 50%, #CDA648 100%);
   
   --text-main: #F8FAFC;
   --text-secondary: #CBD5E1;
   --text-muted: #94A3B8;
-  --text-gold: #F3C04A;
+  --text-gold: #BC9430;
   
-  --shadow-gold: 0 10px 30px -10px rgba(212, 175, 55, 0.3);
+  --shadow-gold: 0 10px 30px -10px rgba(122, 90, 16, 0.35);
   --shadow-card: 0 15px 35px rgba(0, 0, 0, 0.4);
   --glass-bg: rgba(15, 31, 56, 0.85);
   --glass-blur: blur(16px);
