@@ -79,12 +79,30 @@ function initTaxCalendar() {
   if (organismSelect) organismSelect.addEventListener('change', renderCalendar);
 
   function getBaseDay(digit) {
-    // Base day rules according to terminal digit (0-1: 18th, 2-3: 19th, 4-5: 20th, 6-7: 21st, 8-9: 22nd)
+    // Regla general ARCA para IVA/Libro IVA Digital (0-1: 18, 2-3: 19, 4-5: 20, 6-7: 21, 8-9: 22)
+    // El corrimiento por fin de semana/feriado se aplica automáticamente en adjustForWeekend().
     if (digit === 0 || digit === 1) return 18;
     if (digit === 2 || digit === 3) return 19;
     if (digit === 4 || digit === 5) return 20;
     if (digit === 6 || digit === 7) return 21;
     return 22;
+  }
+
+  function getGroupDay(digit, day1, day2, day3) {
+    // Agrupa por terminación de CUIT: 0-3 / 4-6 / 7-9
+    if (digit >= 0 && digit <= 3) return day1;
+    if (digit >= 4 && digit <= 6) return day2;
+    return day3;
+  }
+
+  function adjustForWeekend(year, monthNumber1to12, day) {
+    // Corre automáticamente al próximo día hábil si la fecha cae sábado o domingo.
+    // (No contempla feriados nacionales específicos, solo fines de semana.)
+    let d = new Date(year, monthNumber1to12 - 1, day);
+    const weekday = d.getDay(); // 0 = domingo, 6 = sábado
+    if (weekday === 6) d.setDate(d.getDate() + 2);
+    else if (weekday === 0) d.setDate(d.getDate() + 1);
+    return d.getDate();
   }
 
   function renderCalendar() {
@@ -101,6 +119,11 @@ function initTaxCalendar() {
 
     const baseDay = getBaseDay(selectedDigit);
 
+    // Determina a qué mes/año corresponde cada vencimiento (algunos vencen en el mes siguiente al período)
+    const dueMonthSame = monthVal; // vence en el mes seleccionado
+    const dueMonthNext = monthVal === 12 ? 1 : monthVal + 1; // vence en el mes siguiente
+    const dueYearForNext = monthVal === 12 ? yearVal + 1 : yearVal;
+
     // List of obligations
     const obligations = [
       {
@@ -108,7 +131,7 @@ function initTaxCalendar() {
         badgeClass: 'badge-arca',
         name: 'Monotributo - Pago Mensual',
         period: `${monthNames[monthVal - 1]} ${yearVal}`,
-        dueDay: 20, // Always 20th of the month
+        dueDay: adjustForWeekend(yearVal, dueMonthSame, 20),
         desc: 'Vencimiento único de la cuota mensual unificada.'
       },
       {
@@ -116,7 +139,7 @@ function initTaxCalendar() {
         badgeClass: 'badge-arca',
         name: 'Impuesto al Valor Agregado (IVA)',
         period: `${monthNames[monthVal - 2 < 0 ? 11 : monthVal - 2]} ${yearVal}`,
-        dueDay: baseDay,
+        dueDay: adjustForWeekend(yearVal, dueMonthSame, baseDay),
         desc: 'Declaración jurada mensual e ingreso del saldo resultante.'
       },
       {
@@ -124,7 +147,7 @@ function initTaxCalendar() {
         badgeClass: 'badge-arca',
         name: 'Autónomos (Régimen General)',
         period: `${monthNames[monthVal - 1]} ${yearVal}`,
-        dueDay: baseDay - 10 < 5 ? 5 + selectedDigit : baseDay - 10,
+        dueDay: adjustForWeekend(yearVal, dueMonthSame, getGroupDay(selectedDigit, 5, 6, 7)),
         desc: 'Aporte de trabajadores independientes registrados.'
       },
       {
@@ -132,7 +155,7 @@ function initTaxCalendar() {
         badgeClass: 'badge-arca',
         name: 'Empleadores (Formulario 931 / Sueldos)',
         period: `${monthNames[monthVal - 2 < 0 ? 11 : monthVal - 2]} ${yearVal}`,
-        dueDay: 9 + Math.floor(selectedDigit / 2),
+        dueDay: adjustForWeekend(yearVal, dueMonthSame, getGroupDay(selectedDigit, 10, 11, 12)),
         desc: 'Presentación e integración de aportes y contribuciones patronales.'
       },
       {
@@ -140,15 +163,15 @@ function initTaxCalendar() {
         badgeClass: 'badge-dgr',
         name: 'Ingresos Brutos (DGR Corrientes - Régimen General)',
         period: `${monthNames[monthVal - 2 < 0 ? 11 : monthVal - 2]} ${yearVal}`,
-        dueDay: baseDay + (selectedDigit % 2),
+        dueDay: adjustForWeekend(yearVal, dueMonthSame, selectedDigit <= 2 ? 18 : (selectedDigit <= 5 ? 19 : 20)),
         desc: 'Declaración Jurada e Ingreso de Ingresos Brutos Provincial Corrientes.'
       },
       {
         organism: 'DGR Corrientes',
         badgeClass: 'badge-dgr',
-        name: 'Convenio Multilateral (Sifere Corrientes)',
+        name: 'Convenio Multilateral (Siapere Corrientes)',
         period: `${monthNames[monthVal - 2 < 0 ? 11 : monthVal - 2]} ${yearVal}`,
-        dueDay: 15 + Math.floor(selectedDigit / 2),
+        dueDay: adjustForWeekend(yearVal, dueMonthSame, selectedDigit <= 2 ? 13 : (selectedDigit <= 5 ? 18 : (selectedDigit <= 7 ? 19 : 20))),
         desc: 'Liquidación mensual para contribuyentes con actividad en varias provincias.'
       }
     ];
@@ -202,19 +225,19 @@ function initMonotributoCalculator() {
   const quotaResult = document.getElementById('calcQuotaResult');
   const descResult = document.getElementById('calcDescResult');
 
-  // Categories reference table
+  // Categories reference table (Valores vigentes desde el 1/08/2026 - ARCA)
   const categories = [
-    { cat: 'A', limitServices: 6450000, limitGoods: 6450000, quota: 26600 },
-    { cat: 'B', limitServices: 9450000, limitGoods: 9450000, quota: 30280 },
-    { cat: 'C', limitServices: 13250000, limitGoods: 13250000, quota: 35400 },
-    { cat: 'D', limitServices: 16450000, limitGoods: 16450000, quota: 45200 },
-    { cat: 'E', limitServices: 19350000, limitGoods: 19350000, quota: 58100 },
-    { cat: 'F', limitServices: 24250000, limitGoods: 24250000, quota: 69800 },
-    { cat: 'G', limitServices: 29000000, limitGoods: 29000000, quota: 85200 },
-    { cat: 'H', limitServices: 44000000, limitGoods: 44000000, quota: 170000 },
-    { cat: 'I', limitServices: 44000000, limitGoods: 53250000, quota: 255000 },
-    { cat: 'J', limitServices: 44000000, limitGoods: 61000000, quota: 310000 },
-    { cat: 'K', limitServices: 44000000, limitGoods: 68000000, quota: 395000 }
+    { cat: 'A', limitServices: 12009410.45, limitGoods: 12009410.45, quotaServices: 49527.18, quotaGoods: 49527.18 },
+    { cat: 'B', limitServices: 17595182.74, limitGoods: 17595182.74, quotaServices: 56379.08, quotaGoods: 56379.08 },
+    { cat: 'C', limitServices: 24670494.31, limitGoods: 24670494.31, quotaServices: 66020.12, quotaGoods: 64530.58 },
+    { cat: 'D', limitServices: 30628651.43, limitGoods: 30628651.43, quotaServices: 84612.93, quotaGoods: 82564.81 },
+    { cat: 'E', limitServices: 36028231.33, limitGoods: 36028231.33, quotaServices: 119811.45, quotaGoods: 108267.51 },
+    { cat: 'F', limitServices: 45151659.41, limitGoods: 45151659.41, quotaServices: 150784.21, quotaGoods: 129930.65 },
+    { cat: 'G', limitServices: 53995798.87, limitGoods: 53995798.87, quotaServices: 230312.94, quotaGoods: 158815.05 },
+    { cat: 'H', limitServices: 81924660.37, limitGoods: 81924660.37, quotaServices: 522706.68, quotaGoods: 317895.01 },
+    { cat: 'I', limitServices: 91699761.90, limitGoods: 91699761.90, quotaServices: 963747.86, quotaGoods: 474992.78 },
+    { cat: 'J', limitServices: 105012519.20, limitGoods: 105012519.20, quotaServices: 1167299.76, quotaGoods: 580793.69 },
+    { cat: 'K', limitServices: 126610838.75, limitGoods: 126610838.75, quotaServices: 1614446.04, quotaGoods: 702103.24 }
   ];
 
   if (calcBtn) {
@@ -251,8 +274,9 @@ function initMonotributoCalculator() {
     }
 
     if (foundCat) {
+      const quota = activityType === 'services' ? foundCat.quotaServices : foundCat.quotaGoods;
       categoryResult.textContent = `Categoría ${foundCat.cat}`;
-      quotaResult.textContent = `$${foundCat.quota.toLocaleString('es-AR')} /mes`;
+      quotaResult.textContent = `$${quota.toLocaleString('es-AR', {maximumFractionDigits: 0})} /mes`;
       descResult.textContent = `Facturación anual estimada: $${annualVal.toLocaleString('es-AR')}. Apta para Monotributo unificado e Ingresos Brutos.`;
     } else {
       categoryResult.textContent = 'Excede Monotributo';
