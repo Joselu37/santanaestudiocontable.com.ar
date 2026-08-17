@@ -169,7 +169,7 @@ function initTaxCalendar() {
       {
         organism: 'DGR Corrientes',
         badgeClass: 'badge-dgr',
-        name: 'Convenio Multilateral (Siapere Corrientes)',
+        name: 'Convenio Multilateral (Sifere Corrientes)',
         period: `${monthNames[monthVal - 2 < 0 ? 11 : monthVal - 2]} ${yearVal}`,
         dueDay: adjustForWeekend(yearVal, dueMonthSame, selectedDigit <= 2 ? 13 : (selectedDigit <= 5 ? 18 : (selectedDigit <= 7 ? 19 : 20))),
         desc: 'Liquidación mensual para contribuyentes con actividad en varias provincias.'
